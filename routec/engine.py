@@ -147,8 +147,17 @@ class Engine:
 
     # ── status ──────────────────────────────────────────────────────────────────────────────
     def status(self):
-        cs = self.capture.status()
+        """Current state. Asking for status is a reason to look: a paused stream is restarted and
+        given a few seconds to deliver, so the verdict is about the laptop now, not 'idle'."""
         from .capture import verdict
+        if self.capture.status()["state"] in ("idle", "starting"):
+            try:
+                self.capture.get(timeout=6)
+            except CaptureError:
+                pass
+        else:
+            self.capture.touch()
+        cs = self.capture.status()
         return {
             "capture": cs,
             "verdict": verdict(cs),

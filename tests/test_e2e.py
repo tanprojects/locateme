@@ -156,3 +156,13 @@ def test_token_and_host_checks(daemon):
     with pytest.raises(urllib.error.HTTPError) as e:
         urllib.request.urlopen(req)
     assert e.value.code == 403
+
+
+def test_status_wakes_an_idle_stream(daemon, capsys):
+    cap = daemon["eng"].capture
+    daemon["cfg"]["idle_stop_seconds"] = 1
+    cap._last_client = time.time() - 5
+    assert wait_until(lambda: cap.status()["state"] == "idle", 8)
+    code, out, err = run(capsys, "status", "--deep")
+    assert code == 0 and out.startswith("OK: live"), out
+    assert "lock check: not locked" in out

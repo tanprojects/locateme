@@ -67,3 +67,15 @@ def test_unknown_history_refuses(cfg):
     p.feed(mk(clk.t))
     with pytest.raises(HumanActive):
         p.require_quiet(wait_history=False)
+
+
+def test_gap_in_stream_is_not_activity(cfg):
+    clk = Clock()
+    p = Presence(cfg, clock=clk)
+    cfg["presence_window"] = 5
+    p.feed(mk(clk.t))
+    clk.t += 600                                  # stream paused for 10 minutes
+    assert "not watching" in p.report()["verdict"]
+    p.feed(mk(clk.t, [500, 500, 1500, 900]))     # the screen is different after the pause
+    assert p.report()["active"] is False
+    assert p.report()["last_activity"] is None

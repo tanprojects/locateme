@@ -47,8 +47,11 @@ class Presence:
             if prev is None or prev.size != frame.size:
                 self._since = frame.ts
                 return
-            if frame.ts - prev.ts > 10:            # a gap in the stream: start watching afresh
+            if frame.ts - prev.ts > 10:
+                # A gap (the stream was paused or stalled): what changed during it is unknown, so
+                # start watching afresh instead of calling the difference "activity".
                 self._since = frame.ts
+                return
         d = diff_summary(prev, frame)
         sb = d.get("small_bbox")
         if not sb:
@@ -69,12 +72,16 @@ class Presence:
         window = float(window or self.cfg["presence_window"])
         now = self.clock()
         with self._lock:
-            since, last = self._since, self._last_activity
+            since, last, prev = self._since, self._last_activity, self._prev
+        if prev is None or now - prev.ts > 5:
+            since = None                           # not watching now (stream paused or stalled)
         watched = (now - since) if since else 0.0
         age = (now - last["ts"]) if last else None
         active = age is not None and age < window
         if active:
             verdict = "ACTIVE: the screen changed %.0fs ago at %s, not from our input" % (age, last["bbox"])
+        elif since is None:
+            verdict = "UNKNOWN: not watching (capture paused or no live picture)"
         elif watched < window:
             verdict = "UNKNOWN: only %.0fs of history (need %.0fs)" % (watched, window)
         else:
