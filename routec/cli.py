@@ -321,9 +321,11 @@ def doctor(cfg, c):
             auth = open(res).read().strip()
         except OSError:
             auth = "unknown"
-        row("OK" if auth == "authorized" else "FAIL", "camera grant",
-            auth if auth == "authorized" else auth + ": System Settings > Privacy & Security > Camera > turn on "
-            "RouteC, then `routec restart` (or `routec start --here` from a shell that can already see the camera)")
+        # Advisory only: on Eugene's Mac (macOS 27) frames flow with RouteC still 'notDetermined'.
+        # The picture row below is what decides; this row says what to do if that ever changes.
+        row("OK" if auth == "authorized" else "WARN", "camera grant",
+            auth if auth == "authorized" else auth + " (only matters if the picture check fails: then System "
+            "Settings > Privacy & Security > Camera > turn on RouteC, and `routec restart`)")
     else:
         row("WARN", "camera grant", "RouteC.app not installed (run install.sh); the daemon then needs a "
                                     "camera-capable parent shell (`routec start --here`)")

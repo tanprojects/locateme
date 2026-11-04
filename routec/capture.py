@@ -84,6 +84,7 @@ class FrameStream:
         self._source = "ffmpeg"
         self._busy_strikes = 0
         self._thread = None
+        self._intentional = False
         self.camera_auth = os.environ.get("ROUTEC_CAMERA_AUTH", "unknown")
 
     # ── public ──────────────────────────────────────────────────────────────────────────────
@@ -95,6 +96,7 @@ class FrameStream:
         self._thread.start()
 
     def stop(self):
+        self._intentional = True
         self._stop.set()
         self._demand.set()
         self._kill()
@@ -103,6 +105,7 @@ class FrameStream:
 
     def restart(self):
         self.log("capture: restart requested")
+        self._intentional = True
         self._kill()
 
     def touch(self):
@@ -262,6 +265,9 @@ class FrameStream:
             time.sleep(0.25)
             if proc.poll() is not None:
                 reader.join(timeout=2)
+                if self._intentional:          # restart() killed it: not a fault
+                    self._intentional = False
+                    return True
                 code = classify_stderr(self._stderr)
                 if self._frames_this_proc == 0:
                     self._set_error(code or "ffmpeg_exit", "ffmpeg exited with %s before any frame"

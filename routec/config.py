@@ -24,7 +24,8 @@ DEFAULTS = {
     "stream_fps": 2,                 # what we keep (ffmpeg's fps filter drops the rest)
     "warmup_seconds": 1.5,           # frames this soon after (re)open can be black; never served
     "stall_seconds": 8,              # no frame for this long -> kill and reopen the stream
-    "idle_stop_seconds": 0,          # 0 = stream always on; N = stop after N s with no client
+    "idle_stop_seconds": 900,        # pause the stream after 15 min unused (~28% of a core while on);
+                                     # the next read reopens it in ~2 s. 0 = always on.
     "capture_cmd": None,             # tests: replace the ffmpeg command line entirely
     "obs_fallback": True,            # if the device is locked by OBS, read frames from OBS instead
 
