@@ -426,8 +426,10 @@ def dispatch(verb, a, c, cfg, J):
             print(b["verdict"])
             print("presence: %s | lease: %s | ocr: %s | jobs busy: %s" % (
                 b["presence"]["verdict"], b["lease"], b["ocr"]["engine"], b["jobs_busy"]))
-            if b.get("locked", {}).get("locked"):
-                print("LOCKED: %s" % b["locked"]["why"])
+            lk = b.get("locked")
+            if lk:
+                print("LOCKED: %s" % lk["why"] if lk.get("locked") else
+                      "lock check: %s" % (lk.get("error") or "not locked, no password prompt visible"))
         return 0 if b["verdict"].startswith("OK") else 5
 
     if verb == "screen":
