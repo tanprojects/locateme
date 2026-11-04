@@ -1,0 +1,11 @@
+#!/bin/sh
+# Route C command line. Resolves its own location (also through a symlink) and runs the package.
+SELF="$0"
+while [ -L "$SELF" ]; do
+  LINK=$(readlink "$SELF")
+  case "$LINK" in /*) SELF="$LINK" ;; *) SELF="$(dirname "$SELF")/$LINK" ;; esac
+done
+ROOT="$(cd "$(dirname "$SELF")/.." && pwd -P)"
+PY=/Library/Frameworks/Python.framework/Versions/3.13/bin/python3
+[ -x "$PY" ] || PY="$(command -v python3)"
+PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" exec "$PY" -m routec "$@"
